@@ -52,8 +52,19 @@ enum TokenType {
     Eof,
 }
 
-struct Scanner {}
+struct Token {
+    token_type: TokenType,
+    lexeme: String,
+    line: usize,
+}
+
+struct Scanner {
+    tokens: Vec<Token>,
+}
 impl Scanner {
+    fn new() -> Self {
+        Scanner { tokens: Vec::new() }
+    }
     fn scan_tokens(text: &str) -> String {
         String::from("testing")
     }
