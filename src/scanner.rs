@@ -5,10 +5,6 @@ use crate::{
     token::{Literal, Token, TokenType},
 };
 
-fn scanner_error(line: usize, msg: String) {
-    println!("ERROR: Line {}, {}", line, msg);
-}
-
 pub struct Scanner {
     source: String,
     tokens: Vec<Token>,
@@ -55,8 +51,8 @@ impl Scanner {
 
     fn add_token_with_literal(&mut self, token_type: TokenType, literal: Literal) {
         let lexeme = self.source[self.start..self.current].to_string();
-        self.tokens
-            .push(Token::new(token_type, lexeme, Some(literal), self.line));
+        let token = Token::new(token_type, lexeme, Some(literal), self.line);
+        self.tokens.push(token);
     }
 
     fn advance(&mut self) -> char {
@@ -173,6 +169,7 @@ impl Scanner {
         let num_literal = Literal::Number(str_num.parse::<f64>().unwrap());
         self.add_token_with_literal(TokenType::Number, num_literal);
     }
+
     fn string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
@@ -181,10 +178,16 @@ impl Scanner {
             self.advance();
         }
 
-        let str_val = self.source[self.start + 1..self.current - 1].to_string();
-        self.add_token_with_literal(TokenType::String, Literal::String(str_val));
+        if self.is_at_end() {
+            lox_error(self.line, "Unterminated string.");
+            return;
+        }
+
         // closing "
         self.advance();
+
+        let str_val = self.source[self.start + 1..self.current - 1].to_string();
+        self.add_token_with_literal(TokenType::String, Literal::String(str_val));
     }
 
     fn match_next_char(&mut self, expected: char) -> bool {

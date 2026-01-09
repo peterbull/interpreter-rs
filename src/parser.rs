@@ -81,11 +81,17 @@ impl Parser {
     }
     pub fn parse(&mut self) -> Vec<Result<ExprKind, LoxError>> {
         let mut results = Vec::new();
-        while !self.is_at_end() {
+        while !self.is_at_eof() {
             let expr = self.expression();
             match expr {
                 Ok(expr) => {
                     results.push(Ok(expr));
+                    if let Err(e) =
+                        self.consume(TokenType::Semicolon, "expected semicolon after expression")
+                    {
+                        results.push(Err(e));
+                    }
+
                     continue;
                 }
                 Err(e) => {
@@ -257,11 +263,14 @@ impl Parser {
                 TokenType::RightParen,
                 "there should be a ')' following a '('",
             )?;
-        };
-        self.consume(
-            TokenType::Semicolon,
-            "expected semicolon at end of statement",
-        )?;
+            return Ok(ExprKind::Grouping {
+                expression: Box::new(expr),
+            });
+        }
+        // self.consume(
+        //     TokenType::Semicolon,
+        //     "expected semicolon at end of statement",
+        // )?;
         Err(lox_error_at_line(
             &self.tokens[self.current],
             "expected primary expression",
