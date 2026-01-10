@@ -8,6 +8,10 @@ pub enum LoxError {
 pub fn lox_error(line: usize, message: &str) -> LoxError {
     lox_report(line, "", message)
 }
+pub fn lox_general_error(message: &str) -> LoxError {
+    eprintln!("Error: {}", message);
+    LoxError::ParseError(format!("Error: {}", message))
+}
 pub fn lox_error_at_line(token: &Token, message: &str) -> LoxError {
     let where_info = if token.token_type == TokenType::Eof {
         "at end"

@@ -1,7 +1,6 @@
 use std::io::{self, Write};
 
-use crate::error::LoxError;
-use crate::interpreter::{self, Interpreter};
+use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use crate::scanner::Scanner;
 
@@ -19,6 +18,13 @@ impl Lox {
 
         let expressions = parser.parse();
         println!("expression: {:#?}", expressions);
+        for expression in expressions {
+            let expr_val = match expression {
+                Ok(expr) => Interpreter::eval_expression(&expr),
+                Err(e) => Err(e),
+            };
+            println!("###### expression value: {:?}", expr_val.unwrap());
+        }
     }
     pub fn run_repl(&self) -> io::Result<()> {
         println!("Starting REPL...");

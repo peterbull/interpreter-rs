@@ -5,10 +5,7 @@ use crate::{
 
 pub struct Interpreter {}
 impl Interpreter {
-    pub fn eval_literal(expr: &ExprKind) -> Result<Value, LoxError> {
-        Expr::evaluate(&expr)
-    }
-    pub fn eval_grouping(expr: &ExprKind) -> Result<Value, LoxError> {
-        Expr::evaluate(&expr)
+    pub fn eval_expression(expr_kind: &ExprKind) -> Result<Value, LoxError> {
+        Expr::evaluate(&expr_kind)
     }
 }
