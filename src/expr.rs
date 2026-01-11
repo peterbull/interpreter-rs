@@ -2,7 +2,7 @@
 
 use crate::{
     Literal, Token, TokenType,
-    error::{LoxError, lox_general_error},
+    error::{LoxError, lox_general_error, lox_runtime_error},
 };
 
 #[derive(Debug)]
@@ -39,6 +39,13 @@ impl Value {
                 "Expected boolean, got {:?}",
                 self
             ))),
+        }
+    }
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            Value::Nil => false,
+            Value::Boolean(b) => *b,
+            _ => true,
         }
     }
 }
@@ -98,7 +105,32 @@ pub enum ExprKind {
 #[derive(Debug)]
 pub struct Expr {}
 impl Expr {
-    pub fn evaluate(data: &ExprKind) -> Result<Value, LoxError> {
+    pub fn new() -> Self {
+        Expr {}
+    }
+    fn check_number_operand(
+        &self,
+        operator: &Token,
+        right_operand: &Value,
+    ) -> Result<(), LoxError> {
+        match right_operand {
+            Value::Number(_) => Ok(()),
+            _ => Err(lox_runtime_error(operator, "operand must be a number")),
+        }
+    }
+    fn check_number_operands(
+        &self,
+        operator: &Token,
+        left_operand: &Value,
+        right_operand: &Value,
+    ) -> Result<(), LoxError> {
+        match (left_operand, right_operand) {
+            (Value::Number(_), Value::Number(_)) => Ok(()),
+            _ => Err(lox_runtime_error(operator, "operands must be a number")),
+        }
+    }
+
+    pub fn evaluate(&self, data: &ExprKind) -> Result<Value, LoxError> {
         match data {
             // ExprKind::Assign { name, value } => {}
             ExprKind::Binary {
@@ -106,8 +138,8 @@ impl Expr {
                 operator,
                 right,
             } => {
-                let left_val = Expr::evaluate(left)?;
-                let right_val = Expr::evaluate(right)?;
+                let left_val = self.evaluate(left)?;
+                let right_val = self.evaluate(right)?;
                 match (&left_val, operator.token_type, &right_val) {
                     (Value::Number(left_val), TokenType::Plus, Value::Number(right_val)) => {
                         let addition_result = left_val + right_val;
@@ -125,8 +157,12 @@ impl Expr {
                         let division_result = left_val / right_val;
                         Ok(Value::Number(division_result))
                     }
+                    (Value::String(left_val), TokenType::Plus, Value::String(right_val)) => {
+                        let concat_result = format!("{}{}", left_val, right_val);
+                        Ok(Value::String(concat_result))
+                    }
 
-                    _ => Err(lox_general_error("Binary evaluation error")),
+                    _ => Err(lox_runtime_error(&operator, "Binary evaluation error")),
                 }
             }
             // ExprKind::Call {
@@ -135,7 +171,7 @@ impl Expr {
             //     arguments,
             // } => {}
             // ExprKind::Get { object, name } => {}
-            ExprKind::Grouping { expression } => Expr::evaluate(expression),
+            ExprKind::Grouping { expression } => self.evaluate(expression),
             ExprKind::Literal { value } => Ok(match value {
                 Literal::String(s) => Value::String(s.clone()),
                 Literal::Number(n) => Value::Number(*n),
@@ -155,10 +191,14 @@ impl Expr {
             // ExprKind::Super { keyword, method } => {}
             // ExprKind::This { keyword } => {}
             ExprKind::Unary { operator, right } => {
-                let right_val = Expr::evaluate(right)?;
-                match (operator.token_type, &right_val) {
-                    (TokenType::Minus, Value::Number(right_val)) => Ok(Value::Number(-right_val)),
-                    _ => Err(lox_general_error("Unary evaluation error")),
+                let right_val = self.evaluate(right)?;
+                match operator.token_type {
+                    TokenType::Minus => match right_val {
+                        Value::Number(right_val) => Ok(Value::Number(-right_val)),
+                        _ => Err(lox_runtime_error(&operator, "Operand must be a number")),
+                    },
+                    TokenType::Bang => Ok(Value::Boolean(!right_val.is_truthy())),
+                    _ => Err(lox_runtime_error(operator, "invalid unary operator")),
                 }
             }
             // ExprKind::Variable { name } => {}

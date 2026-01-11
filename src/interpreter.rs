@@ -6,6 +6,7 @@ use crate::{
 pub struct Interpreter {}
 impl Interpreter {
     pub fn eval_expression(expr_kind: &ExprKind) -> Result<Value, LoxError> {
-        Expr::evaluate(&expr_kind)
+        let expr = Expr::new();
+        expr.evaluate(expr_kind)
     }
 }

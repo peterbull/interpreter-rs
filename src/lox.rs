@@ -23,7 +23,7 @@ impl Lox {
                 Ok(expr) => Interpreter::eval_expression(&expr),
                 Err(e) => Err(e),
             };
-            println!("###### expression value: {:?}", expr_val.unwrap());
+            println!("###### expression value: {:?}", expr_val);
         }
     }
     pub fn run_repl(&self) -> io::Result<()> {
