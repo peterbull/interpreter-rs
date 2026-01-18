@@ -1,6 +1,6 @@
 use crate::token::{Token, TokenType};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ReefError {
     ParseError(String),
     RuntimeError(String),

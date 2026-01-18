@@ -1,12 +1,18 @@
 use crate::{error::ReefError, expr::ExprKind};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StmtKind {
-    Print { expression: Box<ExprKind> },
-    Expression { expression: Box<ExprKind> },
+    Print { expr: ExprKind },
+    Expression { expr: ExprKind },
+    Error { e: ReefError },
 }
-pub struct Stmt {}
+pub struct Stmt {
+    stmt: StmtKind,
+}
 impl Stmt {
+    pub fn new(stmt: StmtKind) -> Self {
+        Stmt { stmt }
+    }
     pub fn execute(&mut self, stmt: &StmtKind) -> Result<(), ReefError> {
         match stmt {
             _ => Err(ReefError::reef_general_error(

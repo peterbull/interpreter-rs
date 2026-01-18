@@ -10,6 +10,10 @@ pub struct Reef {
     had_error: bool,
     had_runtime_error: bool,
 }
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() { x } else { y }
+}
+
 impl Reef {
     pub fn new() -> Self {
         Reef {
@@ -28,21 +32,21 @@ impl Reef {
 
         scanner.print_info();
 
-        let expressions = parser.parse();
-        println!("expressions: {:#?}", expressions);
-        for expression in expressions {
-            let expr_val = match expression {
-                Ok(expr) => {
-                    println!("ast: {}", AstPrinter::print(&expr));
-                    interpreter.interpret(&expr)
-                }
-                Err(e) => Err(e),
-            };
-            match expr_val {
-                Ok(_) => {}
-                Err(e) => self.report_error(&e),
-            }
-        }
+        let stmts = parser.parse();
+        println!("statements: {:#?}", stmts);
+        // for expression in expressions {
+        //     let expr_val = match expression {
+        //         Ok(expr) => {
+        //             println!("ast: {}", AstPrinter::print(&expr));
+        //             interpreter.interpret(&expr)
+        //         }
+        //         Err(e) => Err(e),
+        //     };
+        //     match expr_val {
+        //         Ok(_) => {}
+        //         Err(e) => self.report_error(&e),
+        //     }
+        // }
     }
     pub fn run_file(&mut self, filename: &str) {
         let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {

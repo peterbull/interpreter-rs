@@ -1,6 +1,11 @@
 #![allow(unused_variables, dead_code)]
 
-use crate::{Literal, Token, TokenType, error::ReefError, expr::ExprKind};
+use crate::{
+    Literal, Token, TokenType,
+    error::ReefError,
+    expr::ExprKind,
+    stmt::{Stmt, StmtKind},
+};
 
 /*
   Extended Backus-Naur Form (ebnf)
@@ -20,11 +25,16 @@ use crate::{Literal, Token, TokenType, error::ReefError, expr::ExprKind};
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    statements: Vec<StmtKind>,
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Parser { tokens, current: 0 }
+        Parser {
+            tokens,
+            current: 0,
+            statements: Vec::new(),
+        }
     }
     fn advance(&mut self) -> Option<&Token> {
         if !self.is_at_end() {
@@ -75,34 +85,35 @@ impl Parser {
                 == token_type
         }
     }
-    pub fn parse(&mut self) -> Vec<Result<ExprKind, ReefError>> {
-        let mut results = Vec::new();
+    pub fn parse(&mut self) -> Vec<StmtKind> {
         while !self.is_at_eof() {
-            let expr = self.expression();
-            match expr {
-                Ok(expr) => {
-                    results.push(Ok(expr));
-                    if let Err(e) =
-                        self.consume(TokenType::Semicolon, "expected semicolon after expression")
-                    {
-                        results.push(Err(e));
-                    }
-
-                    continue;
-                }
-                Err(e) => {
-                    self.synchronize();
-                    results.push(Err(e));
-                    continue;
-                }
-            }
+            let stmt = self.statement();
+            self.statements.push(stmt)
         }
-        results
+        self.statements.clone()
     }
+
     pub fn expression(&mut self) -> Result<ExprKind, ReefError> {
         self.equality()
     }
+    fn statement(&mut self) -> StmtKind {
+        let expr = self.expression();
+        match expr {
+            Ok(expr) => {
+                if let Err(e) =
+                    self.consume(TokenType::Semicolon, "expected semicolon after expression")
+                {
+                    return StmtKind::Error { e };
+                }
 
+                StmtKind::Expression { expr }
+            }
+            Err(e) => {
+                self.synchronize();
+                StmtKind::Error { e }
+            }
+        }
+    }
     fn equality(&mut self) -> Result<ExprKind, ReefError> {
         let mut expr = self.comparison()?;
         while self.match_type(&[TokenType::BangEqual, TokenType::EqualEqual]) {
