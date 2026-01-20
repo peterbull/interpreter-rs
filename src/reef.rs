@@ -10,10 +10,25 @@ pub struct Reef {
     had_error: bool,
     had_runtime_error: bool,
 }
-fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
-    if x.len() > y.len() { x } else { y }
-}
+/*
+  Extended Backus-Naur Form (ebnf)
 
+  program       -> statement* EOF ;
+  declaration   -> var_decl | statement ;
+  var_decl      -> "var" IDENTIFIER ("=" expression)? ";" ;
+  statement     -> epxr_stmt | print_stmt ;
+  expr_stmt     -> expression ";"
+  print_stmt    -> "print" expression ";"
+  expression    -> equality; // passthrough
+  equality      -> comparison ( ( "!=" | "==") comparison )* ; // a == b == c ...
+  comparison    -> term ( (">" | ">=" | "<" | "<=") term )*;
+  term          -> factor ( ("-" | "+" ) factor)* ;
+  factor        -> unary ( ("/" | "*") unary )*;
+  unary         -> ("!" | "-") unary | primary ;
+  primary       -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
+
+
+*/
 impl Reef {
     pub fn new() -> Self {
         Reef {
@@ -30,10 +45,9 @@ impl Reef {
 
         let interpreter = Interpreter::new();
 
-        scanner.print_info();
+        // scanner.print_info();
 
         let stmts = parser.parse()?;
-        println!("statements: {:#?}", stmts);
         interpreter.interpret(stmts)?;
         Ok(())
     }

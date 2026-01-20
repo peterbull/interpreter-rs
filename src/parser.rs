@@ -7,21 +7,6 @@ use crate::{
     stmt::{Stmt, StmtKind},
 };
 
-/*
-  Extended Backus-Naur Form (ebnf)
-
-  expression    -> equality; // passthrough
-  equality      -> comparison ( ( "!=" | "==") comparison )* ; // a == b == c ...
-  comparison    -> term ( (">" | ">=" | "<" | "<=") term )*;
-  term          -> factor ( ("-" | "+" ) factor)* ;
-  factor        -> unary ( ("/" | "*") unary )*;
-  unary         -> ("!" | "-") unary | primary ;
-  primary       -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
-
-  ex:
-  !5 + 3 * 2 >= 10 - 4 / 2 == true != false
-*/
-
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,

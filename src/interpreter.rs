@@ -1,7 +1,7 @@
 use crate::{
     error::ReefError,
-    expr::{Expr, ExprKind, Value},
-    stmt::{Stmt, StmtKind},
+    expr::{Expr, Value},
+    stmt::StmtKind,
 };
 
 pub struct Interpreter {}
@@ -19,9 +19,9 @@ impl Interpreter {
     }
     pub fn execute(&self, stmt: &StmtKind) -> Result<(), ReefError> {
         match stmt {
-            StmtKind::Expression { expr } => Expr::evaluate(&expr)?,
+            StmtKind::Expression { expr } => Expr::evaluate(expr)?,
             StmtKind::Print { expr } => {
-                let value = Expr::evaluate(&expr)?;
+                let value = Expr::evaluate(expr)?;
                 println!("{}", self.stringify(&value));
                 value
             }
