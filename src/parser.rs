@@ -72,7 +72,7 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<Vec<StmtKind>, ReefError> {
         while !self.is_at_eof() {
-            match self.statement() {
+            match self.declaration() {
                 Ok(stmt) => self.statements.push(stmt),
                 Err(e) => return Err(e),
             }
@@ -96,21 +96,33 @@ impl Parser {
         Ok(StmtKind::Print { expr })
     }
 
+    fn declaration(&mut self) -> Result<StmtKind, ReefError> {
+        let decl_result = {
+            if self.match_type(&[TokenType::Var]) {
+                // todo: logic for this stmt type
+            }
+            if self.match_type(&[TokenType::Fun]) {
+                // todo: logic for this stmt type
+            }
+            self.statement()
+        };
+        match &decl_result {
+            Ok(_) => {}
+            Err(e) => self.synchronize(),
+        }
+        decl_result
+    }
+
+    fn var_declaration() {}
+
     fn statement(&mut self) -> Result<StmtKind, ReefError> {
-        if let Some(token) = self.peek() {
-            match token.token_type {
+        let peek_result = self.peek();
+        match peek_result {
+            Some(token) => match token.token_type {
                 TokenType::Print => self.print_statement(),
                 _ => self.expression_statement(),
-            }
-        } else {
-            self.synchronize();
-            match self.peek() {
-                Some(token) => Err(ReefError::reef_error_at_line(
-                    token,
-                    "Error parsing expression",
-                )),
-                None => Err(ReefError::reef_general_error("Error parsing expression")),
-            }
+            },
+            None => Err(ReefError::reef_general_error("Error parsing expression")),
         }
     }
 

@@ -45,7 +45,7 @@ impl Reef {
 
         let interpreter = Interpreter::new();
 
-        // scanner.print_info();
+        scanner.print_info();
 
         let stmts = parser.parse()?;
         interpreter.interpret(stmts)?;
