@@ -1,5 +1,5 @@
 use crate::{
-    environment::{self, Environment},
+    environment::Environment,
     error::ReefError,
     expr::{Expr, ExprKind, Value},
     stmt::StmtKind,
@@ -30,16 +30,16 @@ impl Interpreter {
                 println!("{}", self.stringify(&value));
                 value
             }
-            StmtKind::Var {
-                name: _,
-                initializer,
-            } => {
-                todo!()
-                // let mut value = Value::Nil;
-                // match initializer {
-                //     ExprKind::None => {}
-                //     _ => {}
-                // }
+            StmtKind::Var { name, initializer } => {
+                let mut value = Value::Nil;
+                match initializer {
+                    ExprKind::None => {}
+                    _ => {
+                        value = Expr::evaluate(initializer)?;
+                    }
+                }
+                self.environment.define(&name.lexeme, &value);
+                value
             }
             _ => todo!(),
         };

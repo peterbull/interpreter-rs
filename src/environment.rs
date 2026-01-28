@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{Token, error::ReefError, expr::ExprKind};
+use crate::{Token, expr::Value};
 
 pub struct Environment {
-    values: HashMap<String, ExprKind>,
+    values: HashMap<String, Value>,
 }
 
 impl Environment {
@@ -12,17 +12,16 @@ impl Environment {
             values: HashMap::new(),
         }
     }
-    pub fn define(&mut self, name: String, value: ExprKind) -> Option<ExprKind> {
-        self.values.insert(name, value)
+    pub fn define(&mut self, name: &str, value: &Value) -> Value {
+        self.values
+            .insert(name.to_string(), value.clone())
+            .expect("should always define a value, even nil")
     }
-    pub fn get(&self, name: &Token) -> Result<&ExprKind, ReefError> {
-        if let Some(name) = self.values.get(&name.lexeme) {
-            return Ok(name);
-        };
-        Err(ReefError::reef_runtime_error(
-            name,
-            &format!("Undefined variable: {}.", name.lexeme),
-        ))
+    pub fn get(&self, name: &Token) -> Value {
+        self.values
+            .get(&name.lexeme)
+            .expect("env should always be able to get this value")
+            .clone()
     }
 }
 impl Default for Environment {

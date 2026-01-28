@@ -1,4 +1,4 @@
-use crate::ast_printer::{self, AstPrinter};
+use crate::ast_printer::AstPrinter;
 use crate::error::ReefError;
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
@@ -44,7 +44,7 @@ impl Reef {
         let tokens = scanner.scan_tokens();
         let mut parser = Parser::new(tokens);
 
-        let interpreter = Interpreter::default();
+        let mut interpreter = Interpreter::default();
 
         scanner.print_info();
 
