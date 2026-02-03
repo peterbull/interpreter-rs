@@ -111,12 +111,17 @@ impl Parser {
         let peek_result = self.peek();
         match peek_result {
             Some(token) => match token.token_type {
+                TokenType::If => self.if_statement(),
                 TokenType::Print => self.print_statement(),
                 TokenType::LeftBrace => self.block_statement(),
                 _ => self.expression_statement(),
             },
             None => Err(ReefError::reef_general_error("Error parsing expression")),
         }
+    }
+
+    fn if_statement(&mut self) -> Result<StmtKind, ReefError> {
+        todo!()
     }
 
     fn block_statement(&mut self) -> Result<StmtKind, ReefError> {
@@ -126,9 +131,7 @@ impl Parser {
             let decl = self.declaration()?;
             statements.push(decl)
         }
-        for stmt in &statements {
-            println!("$$$$$$$$$$$$$ stmts, {:?}", stmt);
-        }
+
         // self.consume(TokenType::RightBrace, "expect '}' after block")?;
         Ok(StmtKind::Block { statements })
     }
