@@ -121,7 +121,26 @@ impl Parser {
     }
 
     fn if_statement(&mut self) -> Result<StmtKind, ReefError> {
-        todo!()
+        self.advance();
+        self.consume(
+            TokenType::LeftParen,
+            "expect '(' to begin if stmt expression",
+        )?;
+        let condition = self.expression()?;
+        self.consume(
+            TokenType::RightParen,
+            "expect ')' to close if stmt expression",
+        )?;
+        let then_branch = Box::new(self.statement()?);
+        let mut else_branch = None;
+        if self.match_type(&[TokenType::Else]) {
+            else_branch = Some(Box::new(self.statement()?));
+        }
+        Ok(StmtKind::If {
+            condition,
+            then_branch,
+            else_branch,
+        })
     }
 
     fn block_statement(&mut self) -> Result<StmtKind, ReefError> {

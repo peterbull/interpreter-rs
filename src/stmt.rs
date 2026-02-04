@@ -2,11 +2,27 @@ use crate::{Token, environment::Environment, error::ReefError, expr::ExprKind};
 
 #[derive(Debug, Clone)]
 pub enum StmtKind {
-    Print { expr: ExprKind },
-    Expression { expr: ExprKind },
-    Var { name: Token, initializer: ExprKind },
-    Block { statements: Vec<StmtKind> },
-    Error { e: ReefError },
+    Print {
+        expr: ExprKind,
+    },
+    Expression {
+        expr: ExprKind,
+    },
+    Var {
+        name: Token,
+        initializer: ExprKind,
+    },
+    Block {
+        statements: Vec<StmtKind>,
+    },
+    If {
+        condition: ExprKind,
+        then_branch: Box<StmtKind>,
+        else_branch: Option<Box<StmtKind>>,
+    },
+    Error {
+        e: ReefError,
+    },
 }
 
 pub struct Stmt {

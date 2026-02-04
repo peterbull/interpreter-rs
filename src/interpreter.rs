@@ -3,7 +3,7 @@ use crate::{
     environment::Environment,
     error::ReefError,
     expr::{ExprKind, Value},
-    stmt::StmtKind,
+    stmt::{self, StmtKind},
 };
 fn check_number_operand(operator: &Token, right_operand: &Value) -> Result<(), ReefError> {
     match right_operand {
@@ -256,7 +256,19 @@ impl Interpreter {
         self.environment = previous;
         Ok(())
     }
-
+    fn execute_if(
+        &mut self,
+        condition: &ExprKind,
+        then_branch: &StmtKind,
+        else_branch: &Option<Box<StmtKind>>,
+    ) -> Result<(), ReefError> {
+        if self.evaluate(condition)?.is_truthy() {
+            self.execute(then_branch)?;
+        } else if let Some(b) = else_branch {
+            self.execute(b)?;
+        }
+        Ok(())
+    }
     pub fn execute(&mut self, stmt: &StmtKind) -> Result<(), ReefError> {
         match stmt {
             StmtKind::Expression { expr } => self.execute_expression(expr)?,
@@ -265,6 +277,11 @@ impl Interpreter {
             StmtKind::Block { statements } => {
                 self.execute_block(statements, Environment::new(Some(self.environment.clone())))?
             }
+            StmtKind::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => self.execute_if(condition, then_branch, else_branch)?,
             _ => todo!(),
         };
         Ok(())
