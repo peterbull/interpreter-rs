@@ -1,8 +1,11 @@
 #![allow(unused_variables, dead_code)]
 
 use crate::{
-    Literal, Token, TokenType, environment::Environment, error::ReefError, expr::ExprKind,
-    stmt::StmtKind,
+    Literal, Token, TokenType,
+    environment::Environment,
+    error::ReefError,
+    expr::ExprKind,
+    stmt::{Stmt, StmtKind},
 };
 
 pub struct Parser {
@@ -111,6 +114,7 @@ impl Parser {
         let peek_result = self.peek();
         match peek_result {
             Some(token) => match token.token_type {
+                TokenType::For => self.for_statement(),
                 TokenType::If => self.if_statement(),
                 TokenType::Print => self.print_statement(),
                 TokenType::While => self.while_statement(),
@@ -120,17 +124,62 @@ impl Parser {
             None => Err(ReefError::reef_general_error("Error parsing expression")),
         }
     }
+    fn for_statement(&mut self) -> Result<StmtKind, ReefError> {
+        self.advance();
+        self.consume(TokenType::LeftParen, "expect '(' to begin for loop")?;
+        let mut initializer = None;
+        if self.match_type(&[TokenType::Semicolon]) {
+            initializer = None;
+        } else if self.match_type(&[TokenType::Var]) {
+            initializer = Some(self.var_declaration()?);
+        } else {
+            initializer = Some(self.expression_statement()?);
+        }
+        let mut condition = None;
+        if !self.check(&TokenType::Semicolon) {
+            condition = Some(self.expression()?);
+        }
+
+        self.consume(TokenType::Semicolon, "expect ';' after loop condition")?;
+
+        let mut increment: Option<ExprKind> = None;
+        if !self.check(&TokenType::RightParen) {
+            increment = Some(self.expression()?);
+        }
+
+        self.consume(TokenType::RightParen, "expect ')' after for clauses")?;
+
+        let mut body = self.statement()?;
+        if let Some(inc) = increment {
+            body = StmtKind::Block {
+                statements: vec![body, StmtKind::Expression { expr: inc }],
+            }
+        }
+        if condition.is_none() {
+            condition = Some(ExprKind::Literal {
+                value: Literal::Boolean(true),
+            })
+        }
+        body = StmtKind::While {
+            condition: condition.expect("should always be a condition here"),
+            body: Box::new(body),
+        };
+        if let Some(init) = initializer {
+            body = StmtKind::Block {
+                statements: vec![init, body],
+            }
+        }
+
+        Ok(body)
+    }
 
     fn while_statement(&mut self) -> Result<StmtKind, ReefError> {
         self.advance();
-        self.consume(
-            TokenType::LeftParen,
-            "expect '(' to begin if while expression",
-        )?;
+        self.consume(TokenType::LeftParen, "expect '(' to begin while expression")?;
         let condition = self.expression()?;
         self.consume(
             TokenType::RightParen,
-            "expect ')' to close if while expression",
+            "expect ')' to close while expression",
         )?;
         let body = self.statement()?;
         Ok(StmtKind::While {
