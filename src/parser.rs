@@ -1,7 +1,7 @@
 #![allow(unused_variables, dead_code)]
 
 use crate::{
-    Literal, Token, TokenType,
+    Literal, Reef, Token, TokenType,
     environment::Environment,
     error::ReefError,
     expr::ExprKind,
@@ -371,6 +371,43 @@ impl Parser {
         Ok(expr)
     }
 
+    fn finish_call(&mut self, callee: ExprKind) -> Result<ExprKind, ReefError> {
+        let mut arguments: Vec<ExprKind> = Vec::new();
+        if !self.check(&TokenType::RightParen) {
+            loop {
+                if arguments.len() >= 255 {
+                    return Err(ReefError::reef_error_at_line(
+                        self.peek().expect("should be a preceding token"),
+                        "can't have more than 255 arguments",
+                    ));
+                }
+                let expr = self.expression()?;
+                arguments.push(expr);
+                if self.match_type(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+        let paren = self.consume(TokenType::RightParen, "Expect ')' after arguments")?;
+        Ok(ExprKind::Call {
+            callee: Box::new(callee),
+            token: paren.clone(),
+            arguments,
+        })
+    }
+
+    fn call(&mut self) -> Result<ExprKind, ReefError> {
+        let mut expr = self.primary()?;
+        loop {
+            if self.match_type(&[TokenType::LeftParen]) {
+                expr = self.finish_call(expr)?;
+            } else {
+                break;
+            }
+        }
+        Ok(expr)
+    }
+
     fn unary(&mut self) -> Result<ExprKind, ReefError> {
         if self.match_type(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self
@@ -383,7 +420,7 @@ impl Parser {
                 right: Box::new(right),
             });
         }
-        self.primary()
+        self.call()
     }
 
     fn consume(&mut self, token_type: TokenType, message: &str) -> Result<&Token, ReefError> {

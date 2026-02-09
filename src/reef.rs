@@ -15,29 +15,56 @@ pub struct Reef {
   Extended Backus-Naur Form (ebnf)
 
   program       -> declaration* EOF ;
+
   declaration   -> var_decl | statement ;
+
   var_decl      -> "var" IDENTIFIER ("=" expression)? ";" ;
+
   statement     -> epxr_stmt
+                | forStmt
                 | if_stmt
                 | print_stmt
                 | while_stmt
                 | block ;
+
+  for_stmt      -> "for" "(" ( var_decl | expr_stmt | ";" )
+                 expression? ";"
+                 expression? ")" statement ;
+
   while_stmt    -> "while" "(" expression ")" statement ;
+
   if_stmt       -> "if" "(" expression ")" statement
                 ( "else" statement)? ;
+
   block         -> "{" declaration* "}"
+
   expr_stmt     -> expression ";"
+
   print_stmt    -> "print" expression ";"
+
   expression    -> assignment;
+
   assignment    -> IDENTIFIER "=" assignment
                 | logic_or ;
+
   logic_or      -> logic_and ( "or" logic_and )* ;
+
   logic_and     -> equality ( "and" equality)* ;
+
   equality      -> comparison ( ( "!=" | "==") comparison )* ; // a == b == c ...
+
   comparison    -> term ( (">" | ">=" | "<" | "<=") term )*;
+
   term          -> factor ( ("-" | "+" ) factor)* ;
+
   factor        -> unary ( ("/" | "*") unary )*;
-  unary         -> ("!" | "-") unary | primary ;
+
+  unary         -> ("!" | "-") unary | call ;
+
+  call          -> primary ( "(" arguments ")" )* ;
+
+  arguments     -> expression ("," expression )* ;
+
   primary       -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
 
 
