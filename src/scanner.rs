@@ -13,6 +13,7 @@ pub struct Scanner {
     current: usize,
     keywords: HashMap<&'static str, TokenType>,
 }
+
 impl Scanner {
     pub fn new(source: String) -> Self {
         let mut keywords = HashMap::new();
@@ -242,5 +243,13 @@ impl Scanner {
     }
     fn is_next_end(&self) -> bool {
         self.current + 1 >= self.source.len()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_output() {
+        assert_eq!(1, 1)
     }
 }

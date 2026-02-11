@@ -1,10 +1,17 @@
+use std::{
+    rc::Rc,
+    time::{SystemTime, UNIX_EPOCH},
+};
+
+use crate::func::{NativeFunction, ReefCallable};
 use crate::{
     Literal, Token, TokenType,
     environment::Environment,
     error::ReefError,
     expr::{ExprKind, Value},
-    stmt::{self, StmtKind},
+    stmt::StmtKind,
 };
+
 fn check_number_operand(operator: &Token, right_operand: &Value) -> Result<(), ReefError> {
     match right_operand {
         Value::Number(_) => Ok(()),
@@ -41,13 +48,29 @@ fn is_equal(a: &Value, b: &Value) -> bool {
 }
 
 pub struct Interpreter {
+    globals: Environment,
     environment: Environment,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
+        let mut globals = Environment::new(None);
+        let clock = NativeFunction {
+            arity: 0,
+            func: |_interpreter, _args| {
+                let time = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs_f64();
+                Ok(Value::Number(time))
+            },
+        };
+
+        globals.define("clock".to_string(), Value::Callable(Rc::new(clock)));
+
         Interpreter {
-            environment: Environment::new(None),
+            environment: globals.clone(),
+            globals,
         }
     }
     pub fn stringify(&self, value: &Value) -> String {
@@ -257,7 +280,17 @@ impl Interpreter {
             arguments_val.push(expr);
         }
         match callee_val {
-            Value::Callable(callable) => callable.call(self, arguments_val),
+            Value::Callable(callable) => {
+                let expected_len = callable.arity();
+                let actual_len = arguments_val.len();
+                if expected_len != actual_len {
+                    ReefError::reef_runtime_error(
+                        token,
+                        &format!("Expected: {} args, got {} args", expected_len, actual_len),
+                    );
+                };
+                callable.call(self, arguments_val)
+            }
             _ => Err(ReefError::reef_runtime_error(
                 token,
                 "can only call funcs and classes",

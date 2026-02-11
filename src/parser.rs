@@ -388,7 +388,6 @@ impl Parser {
                 }
             }
         }
-
         let paren = self.consume(TokenType::RightParen, "Expect ')' after arguments")?;
 
         Ok(ExprKind::Call {
