@@ -83,6 +83,9 @@ impl Parser {
 
     fn declaration(&mut self) -> Result<StmtKind, ReefError> {
         let decl_result = {
+            if self.match_type(&[TokenType::Fun]) {
+                return self.function("function");
+            }
             if self.match_type(&[TokenType::Var]) {
                 return self.var_declaration();
             }
@@ -108,6 +111,32 @@ impl Parser {
         }
         self.consume(TokenType::Semicolon, "expected ';' after var declaration")?;
         Ok(StmtKind::Var { name, initializer })
+    }
+    fn function(&mut self, kind: &str) -> Result<StmtKind, ReefError> {
+        let name = self.consume(
+            TokenType::Identifier,
+            &format!("expect '(' after {} name", { kind }),
+        );
+        let mut parameters: Vec<Token> = Vec::new();
+        if !self.check(&TokenType::RightParen) {
+            loop {
+                if parameters.len() >= 255 {
+                    return Err(ReefError::reef_error_at_line(
+                        self.peek().unwrap(),
+                        "can't have more than 255 params",
+                    ));
+                }
+                parameters.push(
+                    self.consume(TokenType::Identifier, "expect parameter name")?
+                        .clone(),
+                );
+                if !self.match_type(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+        self.consume(TokenType::RightParen, "Expect ')' after params");
+        todo!()
     }
 
     fn statement(&mut self) -> Result<StmtKind, ReefError> {
