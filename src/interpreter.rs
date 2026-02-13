@@ -48,7 +48,7 @@ fn is_equal(a: &Value, b: &Value) -> bool {
 }
 
 pub struct Interpreter {
-    globals: Environment,
+    pub globals: Environment,
     environment: Environment,
 }
 
@@ -381,6 +381,13 @@ impl Interpreter {
                 else_branch,
             } => self.execute_if(condition, then_branch, else_branch)?,
             StmtKind::While { condition, body } => self.execute_while(condition, body)?,
+            StmtKind::Function {
+                name,
+                parameters,
+                body,
+            } => {
+                dbg!(name, parameters, body);
+            }
             _ => todo!(),
         };
         Ok(())

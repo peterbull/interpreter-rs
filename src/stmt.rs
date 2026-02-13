@@ -27,6 +27,11 @@ pub enum StmtKind {
         condition: ExprKind,
         body: Box<StmtKind>,
     },
+    Function {
+        name: Token,
+        parameters: Vec<Token>,
+        body: Vec<StmtKind>,
+    },
 }
 
 pub struct Stmt {

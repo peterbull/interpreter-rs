@@ -113,12 +113,15 @@ impl Parser {
         Ok(StmtKind::Var { name, initializer })
     }
     fn function(&mut self, kind: &str) -> Result<StmtKind, ReefError> {
-        let name = self.consume(
-            TokenType::Identifier,
-            &format!("expect '(' after {} name", { kind }),
-        );
+        let name = &self
+            .consume(
+                TokenType::Identifier,
+                &format!("expect '(' after {} name", { kind }),
+            )?
+            .clone();
+        self.consume(TokenType::LeftParen, "expect '(' before function params")?;
         let mut parameters: Vec<Token> = Vec::new();
-        if !self.check(&TokenType::RightParen) {
+        if !&self.check(&TokenType::RightParen) {
             loop {
                 if parameters.len() >= 255 {
                     return Err(ReefError::reef_error_at_line(
@@ -126,17 +129,28 @@ impl Parser {
                         "can't have more than 255 params",
                     ));
                 }
-                parameters.push(
-                    self.consume(TokenType::Identifier, "expect parameter name")?
-                        .clone(),
-                );
+                let identifier = self
+                    .consume(TokenType::Identifier, "expect parameter name")?
+                    .clone();
+                parameters.push(identifier.clone());
                 if !self.match_type(&[TokenType::Comma]) {
                     break;
                 }
             }
         }
-        self.consume(TokenType::RightParen, "Expect ')' after params");
-        todo!()
+        self.consume(TokenType::RightParen, "Expect ')' after params")?;
+
+        self.consume(
+            TokenType::LeftBrace,
+            &format!("expect '{{' before {} body", { kind }),
+        )?;
+
+        let body = self.block_statements()?;
+        Ok(StmtKind::Function {
+            name: name.clone(),
+            parameters,
+            body,
+        })
     }
 
     fn statement(&mut self) -> Result<StmtKind, ReefError> {
@@ -147,7 +161,10 @@ impl Parser {
                 TokenType::If => self.if_statement(),
                 TokenType::Print => self.print_statement(),
                 TokenType::While => self.while_statement(),
-                TokenType::LeftBrace => self.block_statement(),
+                TokenType::LeftBrace => {
+                    let statements = self.block_statements()?;
+                    Ok(StmtKind::Block { statements })
+                }
                 _ => self.expression_statement(),
             },
             None => Err(ReefError::reef_general_error("Error parsing expression")),
@@ -240,7 +257,7 @@ impl Parser {
         })
     }
 
-    fn block_statement(&mut self) -> Result<StmtKind, ReefError> {
+    fn block_statements(&mut self) -> Result<Vec<StmtKind>, ReefError> {
         self.advance();
         let mut statements: Vec<StmtKind> = Vec::new();
         while !self.match_type(&[TokenType::RightBrace]) && !self.is_at_end() {
@@ -249,7 +266,7 @@ impl Parser {
         }
 
         // self.consume(TokenType::RightBrace, "expect '}' after block")?;
-        Ok(StmtKind::Block { statements })
+        Ok(statements)
     }
 
     fn expression_statement(&mut self) -> Result<StmtKind, ReefError> {
